@@ -16,6 +16,7 @@ import useVideoMetadataCtx from "@/hooks/useVideoMetadataCtx";
 import { styled } from "@mui/material/styles";
 import useCropBoxCtx from "@/hooks/useCropBoxCtx";
 import { color2 } from "@/utils/constants";
+import { CropAreaType } from "@/contexts/editorToolsCtx";
 
 const PrettoSlider = styled(Slider)({
   color: color2,
@@ -114,12 +115,12 @@ export const Crop = () => {
       <Button
         first
         onClick={() => {
-          let obj: any = {};
+          const obj: Record<string, string> = {};
           (["left", "top", "right", "bottom"] as const).forEach(
             (d) => (obj[d] = "0%")
           );
-          setCropArea(obj);
-          updateMasks(obj);
+          setCropArea(obj as CropAreaType);
+          updateMasks(obj as CropAreaType);
         }}
       >
         Original
@@ -230,7 +231,7 @@ export const Rotate = () => {
 
 export const Volume = () => {
   const { volume, setVolume } = useEditorToolsCtx();
-  const handleChange = (event: Event, newValue: number | number[]) => {
+  const handleChange = (_: Event, newValue: number | number[]) => {
     setVolume(newValue as number);
   };
 
@@ -257,7 +258,7 @@ export const Volume = () => {
 
 export const Speed = () => {
   const { speed, setSpeed } = useEditorToolsCtx();
-  const handleChange = (event: Event, newValue: number | number[]) => {
+  const handleChange = (_: Event, newValue: number | number[]) => {
     setSpeed(newValue as number);
   };
 
@@ -306,7 +307,7 @@ export const AddText = () => {
 };
 
 export const AddImage = () => {
-  const { setImageList } = useEditorToolsCtx();
+  // const { setImageList } = useEditorToolsCtx();
 
   return (
     <div className="flex">

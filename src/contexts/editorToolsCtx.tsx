@@ -1,7 +1,7 @@
 "use client";
 import React from "react";
 import { ToolActionType } from "@/ui/EditorTools/useEditorTools";
-import { Directions, ImageBoxType, TextBoxType } from "@/types";
+import { ImageBoxType, TextBoxType } from "@/types";
 
 interface Props {
   cutAction: "cut" | "trim";
@@ -36,7 +36,7 @@ interface Props {
   setVideoDuration: React.Dispatch<React.SetStateAction<number | undefined>>;
 }
 
-type CropAreaType = {
+export type CropAreaType = {
   left: string;
   top: string;
   right: string;

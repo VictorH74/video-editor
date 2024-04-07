@@ -11,7 +11,7 @@ import { ClearBtn, IconButton } from "@/components/buttons";
 import CropBox from "@/components/CropBox";
 import TextBox from "@/components/TextBox";
 import { twMerge } from "tailwind-merge";
-import { bgColor, color1 } from "@/utils/constants";
+import { bgColor } from "@/utils/constants";
 
 export default function EditorWorkSpace() {
   const {
@@ -23,7 +23,6 @@ export default function EditorWorkSpace() {
     flipH,
     flipV,
     cutAction,
-    toolAction,
     videoDuration,
     videoStartTime,
     videoEndTime,

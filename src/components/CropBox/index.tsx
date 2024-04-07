@@ -1,4 +1,3 @@
-import React from "react";
 import DraggableResizableBox from "../DraggableResizableBox";
 import useCropBox from "./useCropBox";
 

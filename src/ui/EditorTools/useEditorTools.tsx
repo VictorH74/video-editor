@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/ban-types */
 import ContentCutIcon from "@mui/icons-material/ContentCut";
 import CropIcon from "@mui/icons-material/Crop";
 import RotateLeftIcon from "@mui/icons-material/RotateLeft";

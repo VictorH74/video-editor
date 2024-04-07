@@ -13,7 +13,7 @@ export default function useEditorWorkSpace() {
   const [paused, setPaused] = React.useState(true);
   const [videoCurrentTime, setVideoCurrentTime] = React.useState(0);
 
-  const { videoName, setVideoResolution, videoUrl, videoResolution } =
+  const { videoName, setVideoResolution, videoUrl } =
     useVideoMetadataCtx();
   const {
     flipH,
@@ -28,7 +28,6 @@ export default function useEditorWorkSpace() {
     speed,
     imageList,
     textList,
-    cropArea,
   } = useEditorToolsCtx();
 
   const { processVideo } =

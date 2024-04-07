@@ -1,5 +1,5 @@
 import useEditorToolsCtx from "@/hooks/useEditorToolsCtx";
-import { Directions, ImageBoxType, TextBoxType } from "@/types";
+import { Directions, ImageBoxType } from "@/types";
 import React from "react";
 
 export interface ImageBoxProps {

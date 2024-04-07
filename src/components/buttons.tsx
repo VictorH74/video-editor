@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/ban-types */
 import { SvgIconTypeMap } from "@mui/material";
 import { OverridableComponent } from "@mui/material/OverridableComponent";
 import ClearIcon from "@mui/icons-material/Clear";
@@ -93,7 +94,6 @@ export const IconButton: React.FC<IconButtonProps> = ({
   </BaseBtn>
 );
 
-// eslint-disable-next-line react/display-name
 export const ClearBtn = React.memo(() => {
   const { setVideoUrl } = useVideoMetadataCtx();
 

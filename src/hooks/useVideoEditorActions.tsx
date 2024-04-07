@@ -1,3 +1,5 @@
+/* eslint-disable no-useless-escape */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { FFmpeg } from "@ffmpeg/ffmpeg";
 import { fetchFile, toBlobURL } from "@ffmpeg/util";
 import React from "react";
@@ -173,10 +175,6 @@ export default function useVideoEditorCtxActions() {
   };
 
   return {
-    trimVideo,
-    cutVideo,
-    crop,
-    flip,
     addTextOnVideo,
     processVideo,
   };
