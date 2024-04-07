@@ -1,0 +1,55 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --foreground-rgb: 0, 0, 0;
+  --background-start-rgb: 214, 219, 220;
+  --background-end-rgb: 255, 255, 255;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --foreground-rgb: 255, 255, 255;
+    --background-start-rgb: 0, 0, 0;
+    --background-end-rgb: 0, 0, 0;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
+.slider:hover {
+  opacity: 1;
+}
+
+.slider::-webkit-slider-thumb {
+  appearance: none;
+  width: 1px;
+  height: 58px;
+  background: rgb(232 121 249);
+  cursor: pointer;
+}
+
+.slider::-moz-range-thumb {
+  appearance: none;
+  width: 1px;
+  height: 100px;
+  background: rgb(232 121 249);
+  cursor: pointer;
+}
+
+.grad {
+  background-image: linear-gradient(white, white),
+    linear-gradient(
+      90deg,
+      rgba(254, 202, 202, 1) 10%,
+      rgba(59, 130, 246, 1) 47%,
+      rgba(34, 211, 238, 1) 100%
+    );
+  background-clip: content-box, border-box;
+}
+
