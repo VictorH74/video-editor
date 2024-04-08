@@ -8,7 +8,7 @@ import React from "react";
 export default function useEditorWorkSpace() {
   // performance.now();
   const videoRef = React.useRef<HTMLVideoElement>(null);
-  const textBoxContainerRef = React.useRef<HTMLDivElement>(null);
+  
   const [showPlayBtn, setShowPlayBtn] = React.useState(false);
   const [paused, setPaused] = React.useState(true);
   const [videoCurrentTime, setVideoCurrentTime] = React.useState(0);
@@ -115,6 +115,5 @@ export default function useEditorWorkSpace() {
     setVideoDuration,
     volume,
     speed,
-    textBoxContainerRef,
   };
 }

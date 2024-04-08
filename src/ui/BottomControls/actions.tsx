@@ -18,6 +18,10 @@ import useCropBoxCtx from "@/hooks/useCropBoxCtx";
 import { color2 } from "@/utils/constants";
 import { CropAreaType } from "@/contexts/editorToolsCtx";
 
+import FormatAlignCenterIcon from '@mui/icons-material/FormatAlignCenter';
+import FormatAlignLeftIcon from '@mui/icons-material/FormatAlignLeft';
+import FormatAlignRightIcon from '@mui/icons-material/FormatAlignRight';
+
 const PrettoSlider = styled(Slider)({
   color: color2,
   height: 8,
@@ -284,10 +288,10 @@ export const Speed = () => {
 };
 
 export const AddText = () => {
-  const { setTextList } = useEditorToolsCtx();
+  const { setTextList, selectedTextboxRef } = useEditorToolsCtx();
 
   return (
-    <div className="flex">
+    <div className="flex gap-1">
       <IconButton
         icon={TextIncreaseIcon}
         rounded
@@ -302,27 +306,72 @@ export const AddText = () => {
         }}
         label="Adicionar Texto"
       />
+      {selectedTextboxRef.current && (
+        <>
+          <IconButton
+            icon={FormatAlignLeftIcon}
+            rounded
+            onClick={() => {
+              selectedTextboxRef.current!.style.textAlign = "left";
+            }}
+          />
+          <IconButton
+            icon={FormatAlignCenterIcon}
+            rounded
+            onClick={() => {
+              selectedTextboxRef.current!.style.textAlign = "center";
+            }}
+          />
+          <IconButton
+            icon={FormatAlignRightIcon}
+            rounded
+            onClick={() => {
+              selectedTextboxRef.current!.style.textAlign = "right";
+            }}
+          />
+        </>
+      )}
+
     </div>
   );
 };
 
 export const AddImage = () => {
-  // const { setImageList } = useEditorToolsCtx();
+  const { setImageList } = useEditorToolsCtx();
+  const inputRef = React.useRef<HTMLInputElement>(null);
+
+  const handleInputtChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const fileInput = e.target;
+
+    if (!fileInput.files) return;
+
+    const file = fileInput.files[0]
+    const url = URL.createObjectURL(file)
+
+    setImageList((prev) => [
+      ...prev,
+      {
+        src: url,
+        directions: { top: "0$", left: "0%" },
+      },
+    ]);
+
+  };
 
   return (
-    <div className="flex">
-      <IconButton
-        icon={AddPhotoAlternateIcon}
-        rounded
-        onClick={() => {
-          alert("Não funcional");
-          // setImageList((prev) => [
-          //   ...prev,
-          //   (<ImageContainer />),
-          // ]);
-        }}
-        label="Adicionar Imagem"
-      />
+    <div className="relative">
+      <label className="" htmlFor="addimginput">
+        <IconButton
+          icon={AddPhotoAlternateIcon}
+          rounded
+          onClick={() => {
+            inputRef.current?.click()
+          }}
+          label="Adicionar Imagem"
+        />
+      </label>
+      <input ref={inputRef} onChange={handleInputtChange} className="absolute left-0 opacity-0 pointer-events-none" id="addimginput" type="file" accept=".jpg,.jpeg,.png,.webp" name="adicionar imagem" />
+
     </div>
   );
 };

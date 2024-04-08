@@ -7,7 +7,7 @@ import { HandlerType } from "@/types";
 import { twMerge } from "tailwind-merge";
 
 export default function DraggableResizableBox(
-  props: DraggableResizableBoxProps
+  { displayBorder = true, ...props }: DraggableResizableBoxProps
 ) {
   const {
     handleResizeStart,
@@ -16,6 +16,10 @@ export default function DraggableResizableBox(
     handleDragEnd,
     resizableRef,
   } = useDraggableResizableBox(props);
+
+  React.useEffect(() => {
+    props.containerRef.current!.style.pointerEvents = displayBorder ? "all" : "none"
+  }, [displayBorder])
 
   React.useEffect(() => {
     if (process.env.NODE_ENV === "development") console.log("ResizableBox");
@@ -28,18 +32,22 @@ export default function DraggableResizableBox(
       <div
         ref={resizableRef}
         style={{
-          opacity: props.displayBorder ? "1" : "0",
-          pointerEvents: props.displayBorder ? "all" : "none",
+          // opacity: displayBorder ? "1" : "0",
+          pointerEvents: displayBorder ? "all" : "none",
           ...props.directions,
         }}
         className={twMerge(
-          "border-2 border-slate-400 absolute cursor-grab text-wrap p"
+          "absolute cursor-grab text-wrap h-fullx"
         )}
         onMouseUp={handleDragEnd}
         onMouseLeave={handleDragEnd}
         onMouseDown={handleDragStart}
         onMouseMove={onDraggableMove}
       >
+        {/* border of draggable box */}
+        {displayBorder && <div className="absolute inset-0 border-2 border-slate-400 pointer-events-none" />}
+
+        {/* resize box buttons*/}
         {[
           {
             direction: "nw",
@@ -52,9 +60,8 @@ export default function DraggableResizableBox(
           },
           {
             direction: "ne",
-            classStr: `right-0 translate-x-1/2 -translate-y-1/2 ${
-              props.onRemove ? "cursor-default" : "cursor-nesw-resize"
-            } `,
+            classStr: `right-0 translate-x-1/2 -translate-y-1/2 ${props.onRemove ? "cursor-default" : "cursor-nesw-resize"
+              } `,
           },
           {
             direction: "e",
@@ -84,16 +91,19 @@ export default function DraggableResizableBox(
         ].map(({ direction, classStr }) => (
           <span
             key={direction}
-            onMouseDown={(e) =>
+            onMouseDown={(e) => {
+              e.stopPropagation()
               props.onRemove && direction === "ne"
                 ? props.onRemove()
                 : handleResizeStart(e, direction as HandlerType)
             }
-            className={`${
-              props.onRemove && direction === "ne"
-                ? "bg-red-500"
-                : "bg-orange-400"
-            }  w-3 h-3 rounded-full absolute ${classStr}`}
+            }
+            className={twMerge(`${props.onRemove && direction === "ne"
+              ? "bg-red-500"
+              : "bg-orange-400"
+              }  w-3 h-3 rounded-full absolute ${classStr}`,
+              displayBorder ? "" : "opacity-0"
+            )}
           />
         ))}
         {props.children}

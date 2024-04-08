@@ -9,7 +9,7 @@ export interface TextBoxProps {
 }
 
 export default function useTextBox(props: TextBoxProps) {
-  const { setTextList } = useEditorToolsCtx();
+  const { setTextList, toolAction, setSelectedTextboxRef } = useEditorToolsCtx();
 
   const changeDirectionsByIndex = (values: Directions) => {
     setTextList((prev) =>
@@ -27,5 +27,5 @@ export default function useTextBox(props: TextBoxProps) {
     setTextList((prev) => prev.filter((_, i) => i !== props.index));
   };
 
-  return { changeDirectionsByIndex, changeContentByIndex, removeBoxByIndex };
+  return { changeDirectionsByIndex, changeContentByIndex, removeBoxByIndex, toolAction, setSelectedTextboxRef };
 }

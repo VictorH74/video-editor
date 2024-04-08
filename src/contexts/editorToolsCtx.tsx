@@ -4,6 +4,7 @@ import { ToolActionType } from "@/ui/EditorTools/useEditorTools";
 import { ImageBoxType, TextBoxType } from "@/types";
 
 interface Props {
+  selectedTextboxRef: React.RefObject<HTMLTextAreaElement>
   cutAction: "cut" | "trim";
   cropArea: CropAreaType;
   rotate: 0 | 1 | 2 | 3;
@@ -20,6 +21,7 @@ interface Props {
   videoDuration: number | undefined;
 
   // tools
+  setSelectedTextboxRef: (ref: React.MutableRefObject<HTMLTextAreaElement | null>) => void
   setCutAction: React.Dispatch<React.SetStateAction<"cut" | "trim">>;
   setCropArea: React.Dispatch<React.SetStateAction<CropAreaType>>;
   setRotate: React.Dispatch<React.SetStateAction<0 | 1 | 2 | 3>>;
@@ -76,13 +78,21 @@ export default function EditorToolsProvider({
   const [videoStartTime, setVideoStartTime] = React.useState(0);
   const [videoEndTime, setVideoEndTime] = React.useState(0);
 
+  const selectedTextboxRef = React.useRef<HTMLTextAreaElement | null>(null);
+
   React.useEffect(() => {
     if (videoDuration) setVideoEndTime(videoDuration);
   }, [videoDuration]);
 
+  const setSelectedTextboxRef = (ref: React.MutableRefObject<HTMLTextAreaElement | null>) => {
+    selectedTextboxRef.current = ref.current
+  }
+
   return (
     <editorToolsCtx.Provider
       value={{
+        selectedTextboxRef,
+        setSelectedTextboxRef,
         setVideoDuration,
         setVideoEndTime,
         setVideoStartTime,

@@ -10,6 +10,7 @@ export interface DraggableResizableBoxProps {
   directions?: Partial<Directions>;
   setDirections?: (directions: Directions) => void;
   childrenRatioAspect?: boolean;
+  minSize?: number;
   onRemove?: () => void
   onDragEnd: (
     values: Directions,
@@ -96,7 +97,7 @@ export default function useDraggableResizableBoxBox(
     const newValue = isBottom ? measure - distance : distance;
     const newValuePercent = (newValue / measure) * 100;
 
-    const minDimension = 10;
+    const minDimension = props.minSize || 0;
     if (
       r[isYAxis ? "offsetHeight" : "offsetWidth"] < minDimension &&
       newValuePercent > prevValues[direction]

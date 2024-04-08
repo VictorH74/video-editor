@@ -9,9 +9,10 @@ import SettingsIcon from "@mui/icons-material/Settings";
 import BottomControls from "../BottomControls";
 import { ClearBtn, IconButton } from "@/components/buttons";
 import CropBox from "@/components/CropBox";
-import TextBox from "@/components/TextBox";
 import { twMerge } from "tailwind-merge";
 import { bgColor } from "@/utils/constants";
+import ImageBoxList from "@/components/ImageBoxList";
+import TextboxList from "@/components/TextBoxList";
 
 export default function EditorWorkSpace() {
   const {
@@ -29,8 +30,6 @@ export default function EditorWorkSpace() {
     setVideoDuration,
     videoName,
     setVideoResolution,
-    textList,
-    textBoxContainerRef,
   } = useEditorWorkSpace();
 
   return (
@@ -75,17 +74,13 @@ export default function EditorWorkSpace() {
             <source type="video/mp4" />
             Your browser does not support the video tag.
           </video>
-          <div className="absolute inset-0" ref={textBoxContainerRef}>
-            {textList.map((t, i) => (
-              <TextBox
-                containerRef={textBoxContainerRef}
-                key={i}
-                index={i}
-                textBox={t}
-              />
-            ))}
-          </div>
+
+          <TextboxList />
+
+          <ImageBoxList />
+          
           <CropBox />
+          
           {/* {toolAction === "crop" && <CropBox />} */}
         </div>
 

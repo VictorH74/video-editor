@@ -12,7 +12,7 @@ interface ButtonProps {
   last?: boolean;
   rounded?: boolean;
   selected?: boolean;
-  onClick: () => void;
+  onClick?: () => void;
   children: React.ReactElement | string;
   className?: string;
   iconClassName?: string;
