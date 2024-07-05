@@ -38,18 +38,7 @@ export default function useEditorTools() {
   const {
     toolAction,
     setToolAction,
-    finalResolution,
-    cropArea,
-    volume,
-    speed,
-    rotate,
-    flipH,
-    flipV,
-    videoStartTime,
-    videoEndTime,
-    videoDuration,
-    textList,
-    imageList
+    changed
   } = useEditorToolsCtx();
   const tools = React.useMemo<ToolType[]>(
     () => [
@@ -57,74 +46,58 @@ export default function useEditorTools() {
         icon: ContentCutIcon,
         label: "Cortar ou Aparar",
         action: "cut_trim",
-        modified: videoStartTime > 0 || videoEndTime < videoDuration!,
+        modified: changed.videoStartEndTime,
       },
       {
         icon: CropIcon,
         label: "Cortar vídeo",
         action: "crop",
-        modified:
-          Object.values(cropArea)
-            .map((v) => parseFloat(v))
-            .reduce((total, v) => total + v, 0) > 0,
+        modified: changed.cropArea,
       },
       {
         icon: RotateLeftIcon,
         label: "Girar",
         action: "rotate",
-        modified: rotate > 0,
+        modified: changed.rotate,
       },
       {
         icon: FlipIcon,
         label: "Inverter",
         action: "flip",
-        modified: flipH || flipV,
+        modified: changed.flip,
       },
       {
         icon: VolumeUpIcon,
         label: "Volume",
         action: "volume",
-        modified: volume < 100,
+        modified: changed.volume,
       },
       {
         icon: SpeedIcon,
         label: "Velocidade",
         action: "speed",
-        modified: speed < 100 || speed > 100,
+        modified: changed.speed,
       },
       {
         icon: AspectRatioIcon,
         label: "Redimensionar",
         action: "resize",
-        modified: !!finalResolution,
+        modified: changed.resize,
       },
       {
         icon: TextIncreaseIcon,
         label: "Add Texto",
         action: "add_text",
-        modified: textList.length > 0,
+        modified: changed.addText,
       },
       {
         icon: AddPhotoAlternateIcon,
         label: "Add Imagem",
         action: "add_image",
-        modified: imageList.length > 0,
+        modified: changed.addImg,
       },
     ],
-    [
-      finalResolution,
-      cropArea,
-      volume,
-      speed,
-      rotate,
-      flipH,
-      flipV,
-      videoStartTime,
-      videoEndTime,
-      videoDuration,
-      textList,
-      imageList
-    ]
+    [changed]
   );
 
   return { tools, toolAction, setToolAction };

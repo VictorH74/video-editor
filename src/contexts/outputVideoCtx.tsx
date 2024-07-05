@@ -4,8 +4,10 @@ import React from "react";
 interface Props {
   processingVideo: boolean;
   exportedVideoUrl: string | null;
-  progress: number[];
-  setProgress: React.Dispatch<React.SetStateAction<number[]>>
+  progress: number;
+  statusMsg: string;
+  setStatusMsg: React.Dispatch<React.SetStateAction<string>>;
+  setProgress: React.Dispatch<React.SetStateAction<number>>
   setProcessingVideo: React.Dispatch<React.SetStateAction<boolean>>;
   setExportedVideoUrl: React.Dispatch<React.SetStateAction<string | null>>;
 }
@@ -17,7 +19,8 @@ export default function OutputVideoProvider({
 }: {
   children: React.ReactElement;
 }) {
-  const [progress, setProgress] = React.useState([0]);
+  const [statusMsg, setStatusMsg] = React.useState("");
+  const [progress, setProgress] = React.useState(0);
   const [processingVideo, setProcessingVideo] = React.useState(false);
   const [exportedVideoUrl, setExportedVideoUrl] = React.useState<string | null>(
     null
@@ -27,9 +30,11 @@ export default function OutputVideoProvider({
   return (
     <outputVideoCtx.Provider
       value={{
+        statusMsg,
         progress,
         processingVideo,
         exportedVideoUrl,
+        setStatusMsg,
         setProgress,
         setProcessingVideo,
         setExportedVideoUrl,

@@ -18,13 +18,15 @@ export default function useVideoEditorCtxActions() {
   const {
     videoStartTime,
     videoEndTime,
-    videoDuration,
     cropArea,
     flipH,
     flipV,
     cutAction,
+    speed,
+    changed,
+    // finalResolution,
   } = useEditorToolsCtx();
-  const { setProgress } = useOutputVideoCtx();
+  const { setProgress, setStatusMsg } = useOutputVideoCtx();
 
   // React.useEffect(() => {
   //   load();
@@ -42,7 +44,7 @@ export default function useVideoEditorCtxActions() {
 
     ffmpeg.on("progress", ({ progress }) => {
       console.log(progress);
-      setProgress([progress]);
+      setProgress(progress);
     });
 
     // toBlobURL is used to bypass CORS issue, urls with the same
@@ -78,69 +80,101 @@ export default function useVideoEditorCtxActions() {
     const ffmpeg = ffmpegRef.current;
     ffmpeg.writeFile("input.mp4", await fetchFile(videoUrl!));
     const execCommand: string[] = []
-    const vfRequired: string[] = []
-    // let decodeAudio = false
+    const filterComplex: string[] = []
     let inputName = "input.mp4"
 
+    // execCommand.push(...["-filter_complex", `[0:v]setpts=PTS/${speed / 100}, vflip, hflip, ${getCropFilter()}[v]${audioSpeedFilter()}`, "-map", "[v]", "-map", "[a]"])
+    // execCommand.push(...["-filter_complex", `[0:v]setpts=0.5*PTS, vflip, hflip, ${getCropFilter()}[v];[0:a]atempo=2.0[a]`, "-map", "[v]", "-map", "[a]"])
+    // execCommand.push(...["-vf", `scale=-1:${finalResolution}`])
+
     // trim or cut
-    if (videoStartTime > 0 || videoEndTime < videoDuration!) {
+    if (changed.videoStartEndTime) {
       inputName = "cut-trim.mp4"
-      await ({
-        trim: async () => {
-          const command = `-ss ${videoStartTime.toString()} -to ${videoEndTime.toString()} -i input.mp4 -c copy ${inputName}`;
-          await ffmpeg.exec(strToCommand(command));
-        },
-        cut: async () => {
-          const part1 = `-i input.mp4 -t ${videoStartTime.toString()} -c copy part1.mp4`;
-          const part2 = `-i input.mp4 -ss ${videoEndTime.toString()} -c copy part2.mp4`;
-
-          const concatParts = `-f concat -safe 0 -i list.txt -c copy ${inputName}`;
-
-          await ffmpeg.exec(strToCommand(part1));
-          await ffmpeg.exec(strToCommand(part2));
-
-          ffmpeg.writeFile(
-            "list.txt",
-            ["file 'part1.mp4'", "file 'part2.mp4'"].join("\n")
-          );
-
-          await ffmpeg.exec(strToCommand(concatParts));
-        },
-      })[cutAction]()
-      // decodeAudio = true
+      await ({ trim, cut })[cutAction](inputName)
     }
+
+    // resize
+    // if (changed.resize) filterComplex.push(`scale=-1:${finalResolution}`)
 
     // crop
-    if (Object.values(cropArea).map((v) => parseFloat(v)).reduce((total, v) => total + v, 0) > 0) {
-      const [left, top, right, bottom] = Object.values(cropArea).map((v) =>
-        parseFloat(v)
-      );
-
-      const videoWidth = videoResolution!.w
-      const videoHeight = videoResolution!.h
-
-      const w = videoWidth - ((left / 100 * videoWidth) + (right / 100 * videoWidth))
-      const h = videoHeight - ((top / 100 * videoHeight) + (bottom / 100 * videoHeight))
-      const x = (left / 100) * videoWidth
-      const y = (top / 100) * videoHeight
-      vfRequired.push(`crop=${w}:${h}:${x}:${y}`)
-    }
+    if (changed.cropArea) filterComplex.push(getCropFilter())
 
     // flip
-    if (flipH) vfRequired.push("hflip");
-    if (flipV) vfRequired.push("vflip");
+    if (flipH) filterComplex.push("hflip");
+    if (flipV) filterComplex.push("vflip");
 
-    if (vfRequired.length > 0) execCommand.push(...["-vf", vfRequired.join(",")])
+    // speed
+    if (changed.speed) filterComplex.push(`setpts=PTS/${speed / 100}`);
 
-    // if (!decodeAudio) execCommand.push(...["-c:a", "copy"])
-    execCommand.push(...["-c:a", "copy"])
+    if (filterComplex.length > 0) {
+      const filters: string[] = ["[0:v]" + filterComplex.join(",") + "[v]", "-map", "[v]"]
+      if (changed.speed) {
+        filters[0] += audioSpeedFilter()
+        filters.push(...["-map", "[a]"])
+      }
+      else filters.push(...["-c:a", "copy"])
+      execCommand.push(...["-filter_complex", ...filters])
 
-    execCommand.unshift(...["-i", inputName])
-    execCommand.push("output.mp4")
-    console.log(execCommand)
+      // execCommand.push(...["-c:a", "copy"])
+      execCommand.unshift(...["-i", inputName])
+      execCommand.push("output.mp4")
+      console.log(execCommand)
 
-    await ffmpeg.exec(execCommand);
-    return createUrl();
+      setStatusMsg("Aplicando filtros...")
+      await ffmpeg.exec(execCommand);
+      return createUrl();
+    }
+
+    return createUrl(inputName);
+  }
+
+  const audioSpeedFilter = () => {
+    const videoSpeed = speed / 100
+    const values = videoSpeed / 2 > 1 ? Array(Math.ceil(videoSpeed / 2)).fill(videoSpeed / 2) : [videoSpeed]
+    return `;[0:a]${values.map(value => "atempo=" + value).join(",")}[a]`
+    // return `;[0:a]atempo=${speed}[a]`
+  }
+
+  const trim = async (inputName: string) => {
+    const ffmpeg = ffmpegRef.current;
+    const command = `-ss ${videoStartTime.toString()} -to ${videoEndTime.toString()} -i input.mp4 -c copy ${inputName}`;
+    setStatusMsg("Aparando vídeo...")
+    await ffmpeg.exec(strToCommand(command));
+  }
+
+  const cut = async (inputName: string) => {
+    const ffmpeg = ffmpegRef.current;
+    const part1 = `-i input.mp4 -t ${videoStartTime.toString()} -c copy part1.mp4`;
+    const part2 = `-i input.mp4 -ss ${videoEndTime.toString()} -c copy part2.mp4`;
+
+    const concatParts = `-f concat -safe 0 -i list.txt -c copy ${inputName}`;
+
+    setStatusMsg("Cortando vídeo...")
+    await ffmpeg.exec(strToCommand(part1));
+    await ffmpeg.exec(strToCommand(part2));
+
+    ffmpeg.writeFile(
+      "list.txt",
+      ["file 'part1.mp4'", "file 'part2.mp4'"].join("\n")
+    );
+
+    await ffmpeg.exec(strToCommand(concatParts));
+  }
+
+  const getCropFilter = () => {
+    const [left, top, right, bottom] = Object.values(cropArea).map((v) =>
+      parseFloat(v)
+    );
+
+    const videoWidth = videoResolution!.w
+    const videoHeight = videoResolution!.h
+
+    const w = videoWidth - ((left / 100 * videoWidth) + (right / 100 * videoWidth))
+    const h = videoHeight - ((top / 100 * videoHeight) + (bottom / 100 * videoHeight))
+    const x = (left / 100) * videoWidth
+    const y = (top / 100) * videoHeight
+
+    return `crop=${w}:${h}:${x}:${y}`
   }
 
   const addTextOnVideo = async (

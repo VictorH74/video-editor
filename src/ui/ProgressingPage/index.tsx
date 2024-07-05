@@ -23,11 +23,13 @@ const BorderLinearProgress = styled(LinearProgress)(({ theme }) => ({
 function LinearProgressWithLabel(
   props: LinearProgressProps & { value: number }
 ) {
+  const { statusMsg } = useOutputVideoCtx();
+
   return (
     <div className="w-[300px]">
       <Box sx={{ minWidth: 35 }}>
         <Typography variant="body2" fontSize={22} color="text.secondary">
-          Processando vídeo
+          {statusMsg}
         </Typography>
       </Box>
       <Box sx={{ minWidth: 35, marginBottom: 2 }}>
@@ -50,13 +52,12 @@ function LinearProgressWithLabel(
 }
 
 export default function ProgressingPage() {
-  // const [progress, setProgress] = React.useState(10);
   const { progress } = useOutputVideoCtx();
 
   return (
     <div className="w-screen h-screen grid place-items-center text-center">
       <LinearProgressWithLabel
-        value={(progress.reduce((t, c) => t + c, 0) / progress.length) * 100}
+        value={progress * 100}
       />
     </div>
   );

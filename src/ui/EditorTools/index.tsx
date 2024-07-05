@@ -6,7 +6,7 @@ import {
   BaseBtn,
 } from "@/components/buttons";
 
-export default React.memo(function EditorTools() {
+const EditorTools = React.memo(function EditorTools() {
   const { tools, setToolAction, toolAction } = useEditorTools();
   const ref = React.useRef(null);
 
@@ -24,7 +24,7 @@ export default React.memo(function EditorTools() {
           />
           <Tooltip title={rest.label} placement="top">
             <BaseBtn
-            ref={ref}
+              ref={ref}
               first={i === 0}
               last={i === tools.length - 1}
               selected={toolAction === rest.action}
@@ -42,3 +42,5 @@ export default React.memo(function EditorTools() {
     </div>
   );
 });
+
+export default EditorTools

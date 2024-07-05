@@ -3,6 +3,18 @@ import React from "react";
 import { ToolActionType } from "@/ui/EditorTools/useEditorTools";
 import { ImageBoxType, TextBoxType } from "@/types";
 
+type ChangedType = {
+  videoStartEndTime: boolean;
+  cropArea: boolean;
+  flip: boolean;
+  rotate: boolean;
+  volume: boolean;
+  speed: boolean;
+  resize: boolean;
+  addText: boolean;
+  addImg: boolean;
+}
+
 interface Props {
   selectedTextboxRef: React.RefObject<HTMLTextAreaElement>
   cutAction: "cut" | "trim";
@@ -19,6 +31,7 @@ interface Props {
   videoStartTime: number;
   videoEndTime: number;
   videoDuration: number | undefined;
+  changed: ChangedType
 
   // tools
   setSelectedTextboxRef: (ref: React.MutableRefObject<HTMLTextAreaElement | null>) => void
@@ -80,6 +93,33 @@ export default function EditorToolsProvider({
 
   const selectedTextboxRef = React.useRef<HTMLTextAreaElement | null>(null);
 
+  const changed: ChangedType = React.useMemo<ChangedType>(() => ({
+    videoStartEndTime: videoStartTime > 0 || (!!videoDuration && videoEndTime < videoDuration),
+    cropArea: Object.values(cropArea)
+      .map((v) => parseFloat(v))
+      .reduce((total, v) => total + v, 0) > 0,
+    flip: flipH || flipV,
+    rotate: rotate > 0,
+    volume: volume < 100,
+    speed: speed < 100 || speed > 100,
+    resize: !!finalResolution,
+    addText: textList.length > 0,
+    addImg: imageList.length > 0
+  }), [
+    finalResolution,
+    cropArea,
+    volume,
+    speed,
+    rotate,
+    flipH,
+    flipV,
+    videoStartTime,
+    videoEndTime,
+    videoDuration,
+    textList,
+    imageList
+  ])
+
   React.useEffect(() => {
     if (videoDuration) setVideoEndTime(videoDuration);
   }, [videoDuration]);
@@ -91,6 +131,7 @@ export default function EditorToolsProvider({
   return (
     <editorToolsCtx.Provider
       value={{
+        changed,
         selectedTextboxRef,
         setSelectedTextboxRef,
         setVideoDuration,

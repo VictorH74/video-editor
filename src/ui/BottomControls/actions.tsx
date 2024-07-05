@@ -151,6 +151,7 @@ const resolutionsObj = {
   "1.8": [2160, 1440, 1080, 720, 480, 360, 240],
   "1.6": [2400, 1600, 1200, 1050, 900, 800, 600, 400],
 };
+
 export const Resize = () => {
   const [resolutions, setResolutions] = React.useState<number[]>([]);
   const { videoResolution } = useVideoMetadataCtx();
