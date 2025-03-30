@@ -3,6 +3,7 @@ import useEditorToolsCtx from "@/hooks/useEditorToolsCtx";
 import useOutputVideoCtx from "@/hooks/useOutputVideoCtx";
 import useVideoMetadataCtx from "@/hooks/useVideoMetadataCtx";
 import React from "react";
+import { createWriteStream } from "streamsaver";
 
 export default function useEditorWorkSpace() {
   // performance.now();
@@ -77,30 +78,39 @@ export default function useEditorWorkSpace() {
     }
   }, [paused]);
 
-  const generateStrCommand = async () => {
+  const generateStrCommand = () => {
     const execCommand: string[] = []; // -> "trim=00-00-5.247:00-00-13.8_crop=733.4995199999998:1080:531.74976:0_scale=-1:1080_transpose=1_hflip_vflip_speed=4";
 
-    const filterComplex: string[] = [];
+    // trim / cut
+    if (changed.videoStartEndTime) {
+      switch (cutAction) {
+        case "cut":
+          // 5.47,10
+          // execCommand.push(`cut=5.47:10`);
+          execCommand.push(`cut=${videoStartTime}:${videoEndTime}`);
+          break;
+        case "trim":
+          execCommand.push(
+            `trim=${videoStartTime}:${videoEndTime - videoStartTime}`
+          );
+          break;
+      }
+    }
 
     // crop
-    if (changed.cropArea) filterComplex.push(getCropFilter());
+    if (changed.cropArea) execCommand.push(getCropFilter());
 
     // resize
-    if (changed.resize) filterComplex.push(`scale=-1:${finalResolution}`);
+    if (changed.resize) execCommand.push(`scale=-1:${finalResolution}`);
 
     // flip
-    if (flipH) filterComplex.push("hflip");
-    if (flipV) filterComplex.push("vflip");
+    if (flipH) execCommand.push("hflip");
+    if (flipV) execCommand.push("vflip");
 
     // speed
-    if (changed.speed) filterComplex.push(`speed=${speed / 100}`);
+    if (changed.speed) execCommand.push(`speed=${speed / 100}`);
 
-    if (filterComplex.length > 0) {
-      execCommand.push(...["-filter_complex", ...filterComplex]);
-
-      console.log(execCommand.join(" "));
-      return execCommand;
-    }
+    return execCommand.join("_");
   };
 
   const getCropFilter = () => {
@@ -132,38 +142,72 @@ export default function useEditorWorkSpace() {
   const saveVideo = async () => {
     if (!videoFile) return;
 
-    generateStrCommand();
     try {
       // setProcessingVideo(true);
       // const newUrl = await processVideo();
       // setExportedVideoUrl(newUrl);
 
-      generateStrCommand();
+      const simpleComplexFilterStr = generateStrCommand();
 
-      const simpleComplexFilterStr =
-        "trim=00-00-5.247:00-00-13.8_scale=-1:1080";
+      console.log(simpleComplexFilterStr);
+
+      // const simpleComplexFilterStr =
+      //   "trim=00-00-5.247:00-00-13.8_scale=-1:1080";
 
       const formData = new FormData();
       formData.append("simpleComplexFilterStr", simpleComplexFilterStr);
       formData.append("file", videoFile);
 
-      const xhr = new XMLHttpRequest();
+      const response = await fetch("/api/video-editor", {
+        method: "POST",
+        body: formData,
+      });
 
-      xhr.onload = (obj) => {
-        if (xhr.status === 200) {
-          console.log("File uploaded successfully!");
-          console.log(obj.target);
-        } else {
-          console.log("File could not be uploaded!");
+      if (!response.body) {
+        console.error("No response body");
+        return;
+      }
+
+      const readerInstance = response.body.getReader();
+      const decoder = new TextDecoder();
+
+      const fileStream = createWriteStream("processed-video.mp4"); // TODO: dinamic extencion
+      const writer = fileStream.getWriter();
+
+      let _done = false;
+      let doneObj = false;
+
+      while (!_done) {
+        const { value, done } = await readerInstance.read();
+        _done = done;
+
+        if (done) {
+          writer.close();
+          console.log("OOKKK");
         }
-      };
 
-      xhr.onerror = () => {
-        console.log("File could not be uploaded!");
-      };
+        const valueStr = decoder.decode(value, { stream: true });
 
-      xhr.open("POST", "/api/video-editor");
-      xhr.send(formData);
+        if (!doneObj) {
+          try {
+            const obj = JSON.parse(valueStr);
+
+            if (obj.progress) {
+              console.log(obj.progress);
+              if (obj.progress === 100) {
+                doneObj = true;
+                console.log("progress done!");
+              }
+            }
+          } catch (_err) {
+            doneObj = true;
+          }
+        }
+
+        if (doneObj && value) {
+          await writer.write(value);
+        }
+      }
     } catch (e) {
       console.error(e);
     } finally {
