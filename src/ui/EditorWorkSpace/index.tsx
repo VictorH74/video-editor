@@ -1,3 +1,4 @@
+"use client";
 import { ClearBtn, IconButton } from "@/components/buttons";
 import CropBox from "@/components/CropBox";
 import TextBox from "@/components/TextBox";
