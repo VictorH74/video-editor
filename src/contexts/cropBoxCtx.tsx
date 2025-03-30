@@ -22,7 +22,7 @@ export const cropBoxCtx = React.createContext<Props | null>(null);
 export default function CropBoxProvider({
   children,
 }: {
-  children: React.ReactElement<any>;
+  children: React.ReactElement;
 }) {
   const maskWestRef = React.useRef<HTMLDivElement>(null);
   const maskNorthRef = React.useRef<HTMLDivElement>(null);

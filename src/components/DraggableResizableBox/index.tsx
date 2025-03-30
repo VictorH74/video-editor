@@ -1,10 +1,10 @@
-/* eslint-disable react-hooks/exhaustive-deps */
+import { HandlerType } from "@/types";
 import React from "react";
+import { twMerge } from "tailwind-merge";
+
 import useDraggableResizableBox, {
   DraggableResizableBoxProps,
 } from "./useDraggableResizableBox";
-import { HandlerType } from "@/types";
-import { twMerge } from "tailwind-merge";
 
 export default function DraggableResizableBox(
   props: DraggableResizableBoxProps

@@ -1,11 +1,12 @@
+import FrameList from "@/components/FrameList";
+import PlaybackControlTrack from "@/components/PlaybackControlTrack";
+import { formatTime } from "@/utils/functions";
 import React from "react";
+
 import useVideoPlaybackControl, {
   frameHeight,
   frameWidth,
 } from "./useVideoPlaybackControl";
-import { formatTime } from "@/utils/functions";
-import FrameList from "@/components/FrameList";
-import PlaybackControlTrack from "@/components/PlaybackControlTrack";
 
 interface Props {
   videoDuration: number;

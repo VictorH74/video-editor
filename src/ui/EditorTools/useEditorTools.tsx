@@ -1,16 +1,16 @@
+import useEditorToolsCtx from "@/hooks/useEditorToolsCtx";
+import AddPhotoAlternateIcon from "@mui/icons-material/AddPhotoAlternate";
+import AspectRatioIcon from "@mui/icons-material/AspectRatio";
 import ContentCutIcon from "@mui/icons-material/ContentCut";
 import CropIcon from "@mui/icons-material/Crop";
-import RotateLeftIcon from "@mui/icons-material/RotateLeft";
 import FlipIcon from "@mui/icons-material/Flip";
-import VolumeUpIcon from "@mui/icons-material/VolumeUp";
-import AspectRatioIcon from "@mui/icons-material/AspectRatio";
-import TextIncreaseIcon from "@mui/icons-material/TextIncrease";
-import AddPhotoAlternateIcon from "@mui/icons-material/AddPhotoAlternate";
+import RotateLeftIcon from "@mui/icons-material/RotateLeft";
 import SpeedIcon from "@mui/icons-material/Speed";
-import React from "react";
-import { OverridableComponent } from "@mui/material/OverridableComponent";
+import TextIncreaseIcon from "@mui/icons-material/TextIncrease";
+import VolumeUpIcon from "@mui/icons-material/VolumeUp";
 import { SvgIconTypeMap } from "@mui/material";
-import useEditorToolsCtx from "@/hooks/useEditorToolsCtx";
+import { OverridableComponent } from "@mui/material/OverridableComponent";
+import React from "react";
 
 export type ToolActionType =
   | "cut_trim"
@@ -25,7 +25,7 @@ export type ToolActionType =
   | undefined;
 
 type ToolType = {
-  icon: OverridableComponent<SvgIconTypeMap<{}, "svg">> & {
+  icon: OverridableComponent<SvgIconTypeMap<object, "svg">> & {
     muiName: string;
   };
   label: string;
@@ -48,7 +48,7 @@ export default function useEditorTools() {
     videoEndTime,
     videoDuration,
     textList,
-    imageList
+    imageList,
   } = useEditorToolsCtx();
   const tools = React.useMemo<ToolType[]>(
     () => [
@@ -71,7 +71,7 @@ export default function useEditorTools() {
         icon: RotateLeftIcon,
         label: "Girar",
         action: "rotate",
-        modified: rotate > 0,
+        modified: !!rotate,
       },
       {
         icon: FlipIcon,
@@ -122,7 +122,7 @@ export default function useEditorTools() {
       videoEndTime,
       videoDuration,
       textList,
-      imageList
+      imageList,
     ]
   );
 

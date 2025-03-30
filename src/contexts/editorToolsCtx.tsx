@@ -1,7 +1,7 @@
 "use client";
-import React from "react";
-import { ToolActionType } from "@/ui/EditorTools/useEditorTools";
 import { ImageBoxType, TextBoxType } from "@/types";
+import { ToolActionType } from "@/ui/EditorTools/useEditorTools";
+import React from "react";
 
 type ChangedType = {
   videoStartEndTime: boolean;
@@ -15,11 +15,13 @@ type ChangedType = {
   addImg: boolean;
 };
 
+type RotateType = "2" | "2 2" | "1" | null;
+
 interface Props {
   selectedTextboxRef: React.RefObject<HTMLTextAreaElement | null>;
   cutAction: "cut" | "trim";
   cropArea: CropAreaType;
-  rotate: 0 | 1 | 2 | 3;
+  rotate: RotateType;
   flipH: boolean;
   flipV: boolean;
   volume: number;
@@ -37,7 +39,7 @@ interface Props {
   setSelectedTextboxRef: (ref: React.RefObject<HTMLTextAreaElement>) => void;
   setCutAction: React.Dispatch<React.SetStateAction<"cut" | "trim">>;
   setCropArea: React.Dispatch<React.SetStateAction<CropAreaType>>;
-  setRotate: React.Dispatch<React.SetStateAction<0 | 1 | 2 | 3>>;
+  setRotate: React.Dispatch<React.SetStateAction<RotateType>>;
   setFlipH: React.Dispatch<React.SetStateAction<boolean>>;
   setFlipV: React.Dispatch<React.SetStateAction<boolean>>;
   setVolume: React.Dispatch<React.SetStateAction<number>>;
@@ -73,7 +75,7 @@ export default function EditorToolsProvider({
     right: "0%",
     bottom: "0%",
   });
-  const [rotate, setRotate] = React.useState<0 | 1 | 2 | 3>(0);
+  const [rotate, setRotate] = React.useState<RotateType>(null); // rotate = transpose values = 90 - 2 | 180 - 2 2 | 270 - 1
   const [flipH, setFlipH] = React.useState(false);
   const [flipV, setFlipV] = React.useState(false);
   const [volume, setVolume] = React.useState(100);
@@ -102,7 +104,7 @@ export default function EditorToolsProvider({
           .map((v) => parseFloat(v))
           .reduce((total, v) => total + v, 0) > 0,
       flip: flipH || flipV,
-      rotate: rotate > 0,
+      rotate: !!rotate,
       volume: volume < 100,
       speed: speed < 100 || speed > 100,
       resize: !!finalResolution,

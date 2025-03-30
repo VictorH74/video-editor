@@ -1,18 +1,18 @@
-/* eslint-disable react-hooks/exhaustive-deps */
-import React from "react";
-import VideoPlaybackControl from "../VideoPlaybackControl";
-import { formatTime } from "@/utils/functions";
-import EditorTools from "@/ui/EditorTools";
-import useEditorWorkSpace from "./useEditorWorkSpace";
-import PlayArrowIcon from "@mui/icons-material/PlayArrow";
-import PauseIcon from "@mui/icons-material/Pause";
-import SettingsIcon from "@mui/icons-material/Settings";
-import BottomControls from "../BottomControls";
 import { ClearBtn, IconButton } from "@/components/buttons";
 import CropBox from "@/components/CropBox";
 import TextBox from "@/components/TextBox";
+import EditorTools from "@/ui/EditorTools";
+import { bgColor } from "@/utils/constants";
+import { formatTime } from "@/utils/functions";
+import PauseIcon from "@mui/icons-material/Pause";
+import PlayArrowIcon from "@mui/icons-material/PlayArrow";
+import SettingsIcon from "@mui/icons-material/Settings";
+import React from "react";
 import { twMerge } from "tailwind-merge";
-import { bgColor, color1 } from "@/utils/constants";
+
+import VideoPlaybackControl from "../VideoPlaybackControl";
+import useEditorWorkSpace from "./useEditorWorkSpace";
+import BottomControls from "../BottomControls";
 
 export default function EditorWorkSpace() {
   const {
@@ -24,7 +24,7 @@ export default function EditorWorkSpace() {
     flipH,
     flipV,
     cutAction,
-    toolAction,
+    // toolAction,
     videoDuration,
     videoStartTime,
     videoEndTime,
@@ -122,7 +122,10 @@ export default function EditorWorkSpace() {
             <IconButton icon={SettingsIcon} rounded onClick={() => {}} />
             <button
               onClick={saveVideo}
-              className={twMerge("hover:brightness-105 duration-200 text-gray-800 py-2 px-6 rounded-lg font-medium", `bg-[#86B6F6]`)}
+              className={twMerge(
+                "hover:brightness-105 duration-200 text-gray-800 py-2 px-6 rounded-lg font-medium",
+                `bg-[#86B6F6]`
+              )}
             >
               Salvar
             </button>

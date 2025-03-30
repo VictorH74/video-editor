@@ -4,13 +4,13 @@ import { DimentionType, DirectionType, Directions, HandlerType } from "@/types";
 import React from "react";
 
 export interface DraggableResizableBoxProps {
-  displayBorder?: boolean
-  masks?: React.ReactElement<any>;
-  children?: React.ReactElement<any>;
+  displayBorder?: boolean;
+  masks?: React.ReactElement;
+  children?: React.ReactElement;
   directions?: Partial<Directions>;
   setDirections?: (directions: Directions) => void;
   childrenRatioAspect?: boolean;
-  onRemove?: () => void
+  onRemove?: () => void;
   onDragEnd: (
     values: Directions,
     containerDimention: DimentionType,

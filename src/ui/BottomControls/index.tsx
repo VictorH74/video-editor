@@ -1,4 +1,6 @@
+import useEditorToolsCtx from "@/hooks/useEditorToolsCtx";
 import React from "react";
+
 import {
   AddImage,
   AddText,
@@ -11,11 +13,10 @@ import {
   Volume,
 } from "./actions";
 import { ToolActionType } from "../EditorTools/useEditorTools";
-import useEditorToolsCtx from "@/hooks/useEditorToolsCtx";
 
 const components: Record<
   Exclude<ToolActionType, undefined>,
-  React.ReactElement<any>
+  React.ReactElement
 > = {
   add_image: <AddImage />,
   add_text: <AddText />,

@@ -1,9 +1,9 @@
 /* eslint-disable react-hooks/exhaustive-deps */
+import useEditorToolsCtx from "@/hooks/useEditorToolsCtx";
+import useVideoMetadataCtx from "@/hooks/useVideoMetadataCtx";
 import useWindowSize from "@/hooks/useWindowSize";
 import { formatTime } from "@/utils/functions";
 import React from "react";
-import useEditorToolsCtx from "@/hooks/useEditorToolsCtx";
-import useVideoMetadataCtx from "@/hooks/useVideoMetadataCtx";
 
 export const frameHeight = 60;
 export const frameWidth = 98;
@@ -84,7 +84,7 @@ export default function useVideoPlaybackControl() {
     if (!playbackControlContainerRef.current) return;
 
     // quantidade de frames a ser renderizados
-    let frameAmount = Math.ceil(
+    const frameAmount = Math.ceil(
       (playbackControlContainerRef.current.offsetWidth + frameWidth) /
         frameWidth
     );
@@ -93,7 +93,7 @@ export default function useVideoPlaybackControl() {
     const avarage = videoDuration / frameAmount;
 
     // array de tempo atual de cada frame (primeiro frame no tempo: 0)
-    let frameTimes = [0];
+    const frameTimes = [0];
 
     for (let time = avarage; time <= videoDuration; time += avarage) {
       frameTimes.push(time);
@@ -108,7 +108,7 @@ export default function useVideoPlaybackControl() {
 
     if (!context) return;
 
-    let frameUrls = [];
+    const frameUrls = [];
 
     for (const frameTime of frameTimes) {
       video.currentTime = frameTime;

@@ -1,20 +1,20 @@
-import RotateLeftIcon from "@mui/icons-material/RotateLeft";
-import RotateRightIcon from "@mui/icons-material/RotateRight";
-import FlipIcon from "@mui/icons-material/Flip";
-import TextIncreaseIcon from "@mui/icons-material/TextIncrease";
-import AddPhotoAlternateIcon from "@mui/icons-material/AddPhotoAlternate";
-
-import Stack from "@mui/material/Stack";
-import Slider from "@mui/material/Slider";
-import VolumeDown from "@mui/icons-material/VolumeDown";
-import VolumeUp from "@mui/icons-material/VolumeUp";
-import React from "react";
 import { Button, IconButton } from "@/components/buttons";
+import { CropAreaType } from "@/contexts/editorToolsCtx";
+import useCropBoxCtx from "@/hooks/useCropBoxCtx";
 import useEditorToolsCtx from "@/hooks/useEditorToolsCtx";
 import useVideoMetadataCtx from "@/hooks/useVideoMetadataCtx";
-import { styled } from "@mui/material/styles";
-import useCropBoxCtx from "@/hooks/useCropBoxCtx";
 import { color2 } from "@/utils/constants";
+import AddPhotoAlternateIcon from "@mui/icons-material/AddPhotoAlternate";
+import FlipIcon from "@mui/icons-material/Flip";
+import RotateLeftIcon from "@mui/icons-material/RotateLeft";
+import RotateRightIcon from "@mui/icons-material/RotateRight";
+import TextIncreaseIcon from "@mui/icons-material/TextIncrease";
+import VolumeDown from "@mui/icons-material/VolumeDown";
+import VolumeUp from "@mui/icons-material/VolumeUp";
+import Slider from "@mui/material/Slider";
+import Stack from "@mui/material/Stack";
+import { styled } from "@mui/material/styles";
+import React from "react";
 
 const PrettoSlider = styled(Slider)({
   color: color2,
@@ -113,12 +113,12 @@ export const Crop = () => {
       <Button
         first
         onClick={() => {
-          const obj: any = {};
+          const obj: Partial<CropAreaType> = {};
           (["left", "top", "right", "bottom"] as const).forEach(
             (d) => (obj[d] = "0%")
           );
-          setCropArea(obj);
-          updateMasks(obj);
+          setCropArea(obj as CropAreaType);
+          updateMasks(obj as CropAreaType);
         }}
       >
         Original
@@ -229,7 +229,7 @@ export const Rotate = () => {
 
 export const Volume = () => {
   const { volume, setVolume } = useEditorToolsCtx();
-  const handleChange = (event: Event, newValue: number | number[]) => {
+  const handleChange = (_: Event, newValue: number | number[]) => {
     setVolume(newValue as number);
   };
 
@@ -256,7 +256,7 @@ export const Volume = () => {
 
 export const Speed = () => {
   const { speed, setSpeed } = useEditorToolsCtx();
-  const handleChange = (event: Event, newValue: number | number[]) => {
+  const handleChange = (_: Event, newValue: number | number[]) => {
     setSpeed(newValue as number);
   };
 
@@ -305,7 +305,7 @@ export const AddText = () => {
 };
 
 export const AddImage = () => {
-  const { setImageList } = useEditorToolsCtx();
+  // const { setImageList } = useEditorToolsCtx();
 
   return (
     <div className="flex">

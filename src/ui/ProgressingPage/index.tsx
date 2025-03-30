@@ -1,12 +1,11 @@
-import * as React from "react";
-import Typography from "@mui/material/Typography";
 import Box from "@mui/material/Box";
-import { styled } from "@mui/material/styles";
 import LinearProgress, {
   linearProgressClasses,
   LinearProgressProps,
 } from "@mui/material/LinearProgress";
-import useOutputVideoCtx from "@/hooks/useOutputVideoCtx";
+import { styled } from "@mui/material/styles";
+import Typography from "@mui/material/Typography";
+import * as React from "react";
 
 const BorderLinearProgress = styled(LinearProgress)(({ theme }) => ({
   height: 10,
@@ -52,13 +51,11 @@ function LinearProgressWithLabel(
 
 export default function ProgressingPage() {
   // const [progress, setProgress] = React.useState(10);
-  const { progress } = useOutputVideoCtx();
+  // const { progress } = useOutputVideoCtx();
 
   return (
     <div className="w-screen h-screen grid place-items-center text-center">
-      <LinearProgressWithLabel
-        value={(progress.reduce((t, c) => t + c, 0) / progress.length) * 100}
-      />
+      <LinearProgressWithLabel value={10} />
     </div>
   );
 }

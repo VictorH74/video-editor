@@ -1,9 +1,8 @@
+import { BaseBtn } from "@/components/buttons";
+import Tooltip from "@mui/material/Tooltip";
 import React from "react";
 
-import Tooltip from "@mui/material/Tooltip";
 import useEditorTools from "./useEditorTools";
-import { BaseBtn } from "@/components/buttons";
-import { twMerge } from "tailwind-merge";
 
 export default React.memo(function EditorTools() {
   const { tools, setToolAction, toolAction } = useEditorTools();

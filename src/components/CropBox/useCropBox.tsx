@@ -1,4 +1,3 @@
-/* eslint-disable react-hooks/exhaustive-deps */
 "use client";
 import useCropBoxCtx from "@/hooks/useCropBoxCtx";
 import useEditorToolsCtx from "@/hooks/useEditorToolsCtx";
@@ -6,7 +5,7 @@ import { DirectionType } from "@/types";
 import React from "react";
 
 export default function useCropBox() {
-  const containerRef = React.useRef<HTMLDivElement>(null)
+  const containerRef = React.useRef<HTMLDivElement>(null);
   const { cropArea, setCropArea, toolAction } = useEditorToolsCtx();
   const {
     maskEastRef,
