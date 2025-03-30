@@ -1,7 +1,6 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import useEditorToolsCtx from "@/hooks/useEditorToolsCtx";
 import useOutputVideoCtx from "@/hooks/useOutputVideoCtx";
-import { useVideoEditorActions } from "@/hooks/useVideoEditorActions";
 import useVideoMetadataCtx from "@/hooks/useVideoMetadataCtx";
 import React from "react";
 
@@ -17,14 +16,15 @@ export default function useEditorWorkSpace() {
     videoName,
     setVideoResolution,
     videoUrl,
-    videoResolution,
     videoFile,
+    videoResolution,
   } = useVideoMetadataCtx();
   const {
     flipH,
     flipV,
     cutAction,
     toolAction,
+    cropArea,
     videoDuration,
     videoStartTime,
     videoEndTime,
@@ -32,12 +32,12 @@ export default function useEditorWorkSpace() {
     volume,
     speed,
     imageList,
+    finalResolution,
     textList,
+    changed,
   } = useEditorToolsCtx();
 
-  const { computedCommand } = useVideoEditorActions();
-
-  const { setExportedVideoUrl, setProcessingVideo } = useOutputVideoCtx();
+  const { setProcessingVideo } = useOutputVideoCtx();
 
   React.useEffect(() => {
     if (!videoRef || !videoRef.current || !videoUrl) return;
@@ -77,6 +77,50 @@ export default function useEditorWorkSpace() {
     }
   }, [paused]);
 
+  const generateStrCommand = async () => {
+    const execCommand: string[] = []; // -> "trim=00-00-5.247:00-00-13.8_crop=733.4995199999998:1080:531.74976:0_scale=-1:1080_transpose=1_hflip_vflip_speed=4";
+
+    const filterComplex: string[] = [];
+
+    // crop
+    if (changed.cropArea) filterComplex.push(getCropFilter());
+
+    // resize
+    if (changed.resize) filterComplex.push(`scale=-1:${finalResolution}`);
+
+    // flip
+    if (flipH) filterComplex.push("hflip");
+    if (flipV) filterComplex.push("vflip");
+
+    // speed
+    if (changed.speed) filterComplex.push(`speed=${speed / 100}`);
+
+    if (filterComplex.length > 0) {
+      execCommand.push(...["-filter_complex", ...filterComplex]);
+
+      console.log(execCommand.join(" "));
+      return execCommand;
+    }
+  };
+
+  const getCropFilter = () => {
+    const [left, top, right, bottom] = Object.values(cropArea).map((v) =>
+      parseFloat(v)
+    );
+
+    const videoWidth = videoResolution!.w;
+    const videoHeight = videoResolution!.h;
+
+    const w =
+      videoWidth - ((left / 100) * videoWidth + (right / 100) * videoWidth);
+    const h =
+      videoHeight - ((top / 100) * videoHeight + (bottom / 100) * videoHeight);
+    const x = (left / 100) * videoWidth;
+    const y = (top / 100) * videoHeight;
+
+    return `crop=${w}:${h}:${x}:${y}`;
+  };
+
   function updateVideoTime() {
     if (videoRef.current) {
       setVideoCurrentTime(videoRef.current.currentTime);
@@ -87,29 +131,35 @@ export default function useEditorWorkSpace() {
 
   const saveVideo = async () => {
     if (!videoFile) return;
+
+    generateStrCommand();
     try {
       // setProcessingVideo(true);
       // const newUrl = await processVideo();
       // setExportedVideoUrl(newUrl);
 
-      computedCommand();
+      generateStrCommand();
+
+      const simpleComplexFilterStr =
+        "trim=00-00-5.247:00-00-13.8_scale=-1:1080";
 
       const formData = new FormData();
+      formData.append("simpleComplexFilterStr", simpleComplexFilterStr);
       formData.append("file", videoFile);
 
       const xhr = new XMLHttpRequest();
 
       xhr.onload = (obj) => {
         if (xhr.status === 200) {
-          alert("File uploaded successfully!");
+          console.log("File uploaded successfully!");
           console.log(obj.target);
         } else {
-          alert("File could not be uploaded!");
+          console.log("File could not be uploaded!");
         }
       };
 
       xhr.onerror = () => {
-        alert("File could not be uploaded!");
+        console.log("File could not be uploaded!");
       };
 
       xhr.open("POST", "/api/video-editor");
