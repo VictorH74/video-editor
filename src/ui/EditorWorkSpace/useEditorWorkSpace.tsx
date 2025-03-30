@@ -1,5 +1,5 @@
-"use client";
 /* eslint-disable react-hooks/exhaustive-deps */
+"use client";
 import useEditorToolsCtx from "@/hooks/useEditorToolsCtx";
 import useOutputVideoCtx from "@/hooks/useOutputVideoCtx";
 import useVideoMetadataCtx from "@/hooks/useVideoMetadataCtx";
@@ -14,7 +14,7 @@ export default function useEditorWorkSpace() {
   const [paused, setPaused] = React.useState(true);
   const [videoCurrentTime, setVideoCurrentTime] = React.useState(0);
 
-  const [createWriteStreamFunc, setCreateWriteStreamFunc] = React.useState<
+  const createWriteStreamFunc = React.useRef<
     | ((
         filename: string,
         options?: CreateWriteStreamOptions<unknown, unknown> | undefined
@@ -24,7 +24,7 @@ export default function useEditorWorkSpace() {
 
   React.useEffect(() => {
     import("streamsaver").then((module) => {
-      setCreateWriteStreamFunc(module.createWriteStream);
+      createWriteStreamFunc.current = module.createWriteStream;
     });
   }, []);
 
@@ -186,7 +186,7 @@ export default function useEditorWorkSpace() {
       const readerInstance = response.body.getReader();
       const decoder = new TextDecoder();
 
-      const fileStream = createWriteStreamFunc!("processed-video.mp4"); // TODO: dinamic extencion
+      const fileStream = createWriteStreamFunc.current!("processed-video.mp4"); // TODO: dinamic extencion
       const writer = fileStream.getWriter();
 
       let _done = false;
