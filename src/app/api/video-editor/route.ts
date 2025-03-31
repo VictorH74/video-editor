@@ -1,25 +1,43 @@
 import ffmpeg, { FilterSpecification } from "fluent-ffmpeg";
 import fs from "fs";
+import { unlink } from "fs/promises";
+import { NextRequest } from "next/server";
+import path from "path";
+import { pipeline } from "stream";
+import { promisify } from "util";
 
 import {
   FilterType,
-  generateVideoPaths,
   generateVideoComplexFilter,
   FilterObjType,
 } from "./util/functions";
 
 // TODO: disabel add_text and add_img filters when rotate filter is aplied
 
-export async function POST(req: Request) {
-  const formData = await req.formData();
-  // const cutTrimCommand = formData.get("cutTrimCommand")
-  const simpleComplexFilterStr = formData.get(
+export async function POST(req: NextRequest) {
+  console.log("Called");
+  const simpleComplexFilterStr = req.nextUrl.searchParams.get(
     "simpleComplexFilterStr"
-  ) as string;
+  );
+
+  if (!simpleComplexFilterStr) {
+    return new Response("param 'simpleComplexFilterStr' not provided", {
+      status: 400,
+    });
+  }
+
+  console.log(simpleComplexFilterStr);
 
   try {
-    const { videoPath, outputVideoPath, removeFiles } =
-      await generateVideoPaths(formData.get("file") as File);
+    const tempVideoPath = path.join("/tmp", `input-${Date.now()}.mp4`);
+    const outputVideoPath = path.join("/tmp", `output-${Date.now()}.mp4`);
+
+    const writeStream = fs.createWriteStream(tempVideoPath);
+    const pipelineAsync = promisify(pipeline);
+    await pipelineAsync(
+      req.body as unknown as NodeJS.ReadableStream,
+      writeStream
+    );
 
     // TODO: limit video resolution up to 360 instead 240
 
@@ -39,7 +57,7 @@ export async function POST(req: Request) {
       );
     });
 
-    // Connect video stream
+    // Connect video filters stream
     for (let i = 0; i < videoComplexFilterList.length; i++) {
       const complexFilter = videoComplexFilterList[i];
 
@@ -49,7 +67,7 @@ export async function POST(req: Request) {
       if (i + 1 == videoComplexFilterList.length) complexFilter.outputs = "v";
     }
 
-    // Connect audio stream
+    // Connect audio filters stream
     for (let i = 0; i < audioComplexFilterList.length; i++) {
       const complexFilter = audioComplexFilterList[i];
 
@@ -69,9 +87,7 @@ export async function POST(req: Request) {
 
     const hasAudioStream = audioComplexFilterList.length > 0;
 
-    let ffmpegInstance = ffmpeg(videoPath)
-      // .inputOptions(["-ss 00:00:07.500"]) // cut
-      // .duration("00:00:05")
+    let ffmpegInstance = ffmpeg(tempVideoPath)
       .videoCodec("libx264")
       .audioCodec("aac")
       .complexFilter(complexFilters as FilterSpecification[])
@@ -85,19 +101,22 @@ export async function POST(req: Request) {
           ffmpegInstance
             .output(outputVideoPath)
             .on("end", () => {
-              controller.enqueue(JSON.stringify({ progress: 100 }));
+              controller.enqueue(
+                new TextEncoder().encode(JSON.stringify({ startVideo: true }))
+              ); // Inicia o envio do vídeo
 
-              const readStream = fs.createReadStream(outputVideoPath, {
-                encoding: "utf-8",
-              });
+              const readStream = fs.createReadStream(outputVideoPath);
 
               readStream.on("data", (chunk) => {
                 console.log("Received chunk:", chunk);
-                controller.enqueue(chunk);
+                controller.enqueue(
+                  new Uint8Array(chunk as Buffer<ArrayBufferLike>)
+                );
               });
 
               readStream.on("end", async () => {
-                await removeFiles();
+                await unlink(tempVideoPath);
+                await unlink(outputVideoPath);
                 controller.close();
                 console.log("Finished reading the file.");
               });
@@ -107,17 +126,27 @@ export async function POST(req: Request) {
                   "An error occurred in 'readStream':",
                   err.message
                 );
-                controller.enqueue(JSON.stringify({ error: err.message }));
+                controller.enqueue(
+                  new TextEncoder().encode(
+                    JSON.stringify({ error: err.message })
+                  )
+                );
               });
             })
             .on("error", (err) => {
               console.error("An error occurred:", err);
-              controller.enqueue(JSON.stringify({ error: err.message }));
+              controller.enqueue(
+                new TextEncoder().encode(JSON.stringify({ error: err.message }))
+              );
               controller.close();
             })
             .on("progress", (e) => {
               console.log(e.percent);
-              controller.enqueue(JSON.stringify({ progress: e.percent }));
+              controller.enqueue(
+                new TextEncoder().encode(
+                  JSON.stringify({ progress: e.percent })
+                )
+              );
             })
             .run();
         }
@@ -126,7 +155,9 @@ export async function POST(req: Request) {
       },
     });
 
-    return new Response(readableStream);
+    return new Response(readableStream, {
+      headers: { "Content-Type": "application/octet-stream" }, // Definir corretamente o tipo da resposta
+    });
   } catch (error) {
     console.error(error);
     return Response.json(

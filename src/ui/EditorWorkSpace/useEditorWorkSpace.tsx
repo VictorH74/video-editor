@@ -3,6 +3,7 @@
 import useEditorToolsCtx from "@/hooks/useEditorToolsCtx";
 import useOutputVideoCtx from "@/hooks/useOutputVideoCtx";
 import useVideoMetadataCtx from "@/hooks/useVideoMetadataCtx";
+// import { getDownloadURL, getStorage, ref, uploadBytes } from "firebase/storage";
 import React from "react";
 import { CreateWriteStreamOptions } from "streamsaver";
 
@@ -154,6 +155,59 @@ export default function useEditorWorkSpace() {
     requestAnimationFrame(updateVideoTime);
   }
 
+  async function uploadVideo(file: File, simpleComplexFilterStr: string) {
+    const chunkSize = 4 * 1024 * 1024; // 4MB por chunk
+
+    const stream = new ReadableStream({
+      start(controller) {
+        const reader = file.stream().getReader();
+
+        function push() {
+          reader.read().then(({ done, value }) => {
+            if (done) {
+              controller.close();
+              return;
+            }
+
+            // Divide os chunks conforme necessário
+            for (let i = 0; i < value.length; i += chunkSize) {
+              controller.enqueue(value.slice(i, i + chunkSize));
+            }
+
+            push();
+          });
+        }
+
+        push();
+      },
+    });
+
+    const request = new Request(
+      `/api/video-editor?simpleComplexFilterStr=${encodeURIComponent(
+        simpleComplexFilterStr
+      )}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/octet-stream" },
+        body: stream,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        ...((fetch as any) && { duplex: "half" }),
+      }
+    );
+
+    return fetch(request);
+  }
+
+  // async function uploadVideoToFirebase(file: File) {
+  //   const storage = getStorage();
+  //   const storageRef = ref(storage, `vheditor-uploads/${file.name}`);
+  //   const snap = await uploadBytes(storageRef, file, {
+  //     contentType: file.type,
+  //   });
+
+  //   return getDownloadURL(snap.ref);
+  // }
+
   const saveVideo = async () => {
     if (!videoFile) return;
 
@@ -166,21 +220,7 @@ export default function useEditorWorkSpace() {
 
       console.log(simpleComplexFilterStr);
 
-      // const simpleComplexFilterStr =
-      //   "trim=00-00-5.247:00-00-13.8_scale=-1:1080";
-
-      const formData = new FormData();
-      formData.append("simpleComplexFilterStr", simpleComplexFilterStr);
-      formData.append("file", videoFile);
-
-      // new way
-      // TODO: upload videoFile in Firebase Storage
-      // TODO: request to '/api/video-editor' with video url stored as body
-
-      const response = await fetch("/api/video-editor", {
-        method: "POST",
-        body: formData,
-      });
+      const response = await uploadVideo(videoFile, simpleComplexFilterStr);
 
       if (!response.body) {
         console.error("No response body");
@@ -190,43 +230,91 @@ export default function useEditorWorkSpace() {
       const readerInstance = response.body.getReader();
       const decoder = new TextDecoder();
 
-      const fileStream = createWriteStreamFunc.current!("processed-video.mp4"); // TODO: dinamic extencion
-      const writer = fileStream.getWriter();
+      // const fileHandle = await window.showSaveFilePicker({
+      //   suggestedName: "processed-video.mp4",
+      //   types: [{ accept: { "video/mp4": [".mp4"] } }],
+      // });
 
+      const fileStream = createWriteStreamFunc.current!(videoFile.name);
+      // const fileStream = await fileHandle.createWritable();
+
+      let isVideoStarted = false;
       let _done = false;
-      let doneObj = false;
 
       while (!_done) {
         const { value, done } = await readerInstance.read();
         _done = done;
 
         if (done) {
-          writer.close();
-          console.log("OOKKK");
+          await fileStream.close();
+          console.log("Download complete!");
+          return;
         }
 
-        const valueStr = decoder.decode(value, { stream: true });
+        if (!isVideoStarted) {
+          const valueStr = decoder.decode(value, { stream: true });
 
-        if (!doneObj) {
           try {
             const obj = JSON.parse(valueStr);
-
             if (obj.progress) {
-              console.log(obj.progress);
-              if (obj.progress === 100) {
-                doneObj = true;
-                console.log("progress done!");
-              }
+              console.log(`Progress: ${obj.progress}%`);
+              continue;
             }
-          } catch (_err) {
-            doneObj = true;
+            if (obj.startVideo) {
+              isVideoStarted = true;
+              console.log("Receiving video chunks...");
+              continue;
+            }
+          } catch (_e) {
+            isVideoStarted = true; // Se falhar ao parsear JSON, significa que o vídeo começou
           }
         }
 
-        if (doneObj && value) {
-          await writer.write(value);
+        if (isVideoStarted && value) {
+          await fileStream.getWriter().write(value); // Escreve os chunks de vídeo no arquivo
         }
       }
+
+      // const readerInstance = response.body.getReader();
+      // const decoder = new TextDecoder();
+
+      // const fileStream = createWriteStreamFunc.current!("processed-video.mp4"); // TODO: dinamic extencion
+      // const writer = fileStream.getWriter();
+
+      // let _done = false;
+      // let doneObj = false;
+
+      // while (!_done) {
+      //   const { value, done } = await readerInstance.read();
+      //   _done = done;
+
+      //   if (done) {
+      //     writer.close();
+      //     console.log("OK");
+      //   }
+
+      //   const valueStr = decoder.decode(value, { stream: true });
+
+      //   if (!doneObj) {
+      //     try {
+      //       const obj = JSON.parse(valueStr);
+
+      //       if (obj.progress) {
+      //         console.log(obj.progress);
+      //         if (obj.progress === 100) {
+      //           doneObj = true;
+      //           console.log("progress done!");
+      //         }
+      //       }
+      //     } catch (_err) {
+      //       doneObj = true;
+      //     }
+      //   }
+
+      //   if (doneObj && value) {
+      //     await writer.write(value);
+      //   }
+      // }
     } catch (e) {
       console.error(e);
     } finally {
