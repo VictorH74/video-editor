@@ -185,18 +185,16 @@ export const generateVideoPaths = async (file: File) => {
   const bytes = await file.arrayBuffer();
   const buffer = Buffer.from(bytes);
 
-  // build the complete path to our 'public/uploads' directory
-  const videoPath = path.join(process.cwd(), "public/uploads", file.name);
-  const videoOutputDir = path.resolve("public/uploads/output/");
+  const tempDir = "/tmp/uploads";
+  const videoPath = path.join(tempDir, file.name);
+  const outputVideoPath = path.join(
+    tempDir,
+    `vheditor_${randomUUID()}_${file.name}`
+  );
 
-  if (!fs.existsSync(videoOutputDir)) {
-    fs.mkdirSync(videoOutputDir);
+  if (!fs.existsSync(tempDir)) {
+    fs.mkdirSync(tempDir, { recursive: true });
   }
-
-  const outputVideoPath = `${videoOutputDir}/vheditor_${randomUUID()}_${
-    file.name
-  }`;
-
   // ensure the uploads directory exists
   await mkdir(path.dirname(videoPath), { recursive: true });
   await writeFile(videoPath, buffer);

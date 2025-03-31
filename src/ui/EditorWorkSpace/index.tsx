@@ -46,10 +46,11 @@ export default function EditorWorkSpace() {
 
         <h2 className="text-gray-700 text-lg">{videoName}</h2>
 
-        <div className="relative shadow-xl">
+        <div className="relative shadow-xl max-h-[720px] w-full grid place-items-center">
           <video
-            width="1280"
-            height="720"
+            // width="1280"
+            // height="720"
+            className="h-full max-h-[720px] w-auto"
             style={{
               scale: `${flipH ? -1 : 1} ${flipV ? -1 : 1}`,
             }}

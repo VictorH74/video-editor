@@ -173,6 +173,10 @@ export default function useEditorWorkSpace() {
       formData.append("simpleComplexFilterStr", simpleComplexFilterStr);
       formData.append("file", videoFile);
 
+      // new way
+      // TODO: upload videoFile in Firebase Storage
+      // TODO: request to '/api/video-editor' with video url stored as body
+
       const response = await fetch("/api/video-editor", {
         method: "POST",
         body: formData,
