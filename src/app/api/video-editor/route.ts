@@ -1,3 +1,4 @@
+import ffmpegPath from "@ffmpeg-installer/ffmpeg";
 import ffmpeg, { FilterSpecification } from "fluent-ffmpeg";
 import fs from "fs";
 import { unlink } from "fs/promises";
@@ -5,6 +6,8 @@ import { NextRequest } from "next/server";
 import path from "path";
 import { pipeline } from "stream";
 import { promisify } from "util";
+
+// ffmpeg.setFfmpegPath(ffmpegPath.path);
 
 import {
   FilterType,
@@ -88,6 +91,7 @@ export async function POST(req: NextRequest) {
     const hasAudioStream = audioComplexFilterList.length > 0;
 
     let ffmpegInstance = ffmpeg(tempVideoPath)
+      .setFfmpegPath(ffmpegPath.path)
       .videoCodec("libx264")
       .audioCodec("aac")
       .complexFilter(complexFilters as FilterSpecification[])
