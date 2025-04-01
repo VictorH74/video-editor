@@ -9,19 +9,24 @@ export default function SelectVideoFile() {
 
   const handleSelectChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const fileInput = e.target;
-    const selectedFile = fileInput.files?.[0];
 
-    if (selectedFile) {
-      setVideoFile(selectedFile);
-    }
+    selectFile(fileInput.files?.[0]);
   };
 
   const handleFileDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
-    const selectedFile = e.dataTransfer.files[0];
 
-    if (selectedFile) {
-      setVideoFile(selectedFile);
+    selectFile(e.dataTransfer.files[0]);
+    setOnDrag(false);
+  };
+
+  const selectFile = (file: File | undefined) => {
+    if (file) {
+      if (file.size > 50 * 1024 * 1024) {
+        alert("Tamanho do vídeo deve ser no máximo 50MB");
+        return;
+      }
+      setVideoFile(file);
     }
   };
 
@@ -45,7 +50,7 @@ export default function SelectVideoFile() {
     >
       <div
         style={{ opacity: onDrag ? 1 : 0 }}
-        className="duration-150 absolute pointer-events-none z-10 bg-[#ffffffab] inset-0 border-dashed border-[6px] border-[#49b5d6a9] grid place-items-center"
+        className="duration-150 absolute pointer-events-none z-10 bg-[#ffffff] inset-0 border-dashed border-[6px] border-[#49b5d6a9] grid place-items-center"
       >
         <div>
           <div className="relative bg-transparent border-4 border-double border-transparent rounded-xl bg-origin-border box-border grad">

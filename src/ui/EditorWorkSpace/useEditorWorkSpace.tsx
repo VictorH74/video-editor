@@ -3,31 +3,14 @@
 import useEditorToolsCtx from "@/hooks/useEditorToolsCtx";
 import useOutputVideoCtx from "@/hooks/useOutputVideoCtx";
 import useVideoMetadataCtx from "@/hooks/useVideoMetadataCtx";
-// import { getDownloadURL, getStorage, ref, uploadBytes } from "firebase/storage";
 import React from "react";
-import { CreateWriteStreamOptions } from "streamsaver";
 
 export default function useEditorWorkSpace() {
-  // performance.now();
   const videoRef = React.useRef<HTMLVideoElement>(null);
   const textBoxContainerRef = React.useRef<HTMLDivElement>(null);
   const [showPlayBtn, setShowPlayBtn] = React.useState(false);
   const [paused, setPaused] = React.useState(true);
   const [videoCurrentTime, setVideoCurrentTime] = React.useState(0);
-
-  const createWriteStreamFunc = React.useRef<
-    | ((
-        filename: string,
-        options?: CreateWriteStreamOptions<unknown, unknown> | undefined
-      ) => WritableStream<Uint8Array<ArrayBufferLike>>)
-    | null
-  >(null);
-
-  React.useEffect(() => {
-    import("streamsaver").then((module) => {
-      createWriteStreamFunc.current = module.createWriteStream;
-    });
-  }, []);
 
   const {
     videoName,
@@ -54,7 +37,13 @@ export default function useEditorWorkSpace() {
     changed,
   } = useEditorToolsCtx();
 
-  const { setProcessingVideo } = useOutputVideoCtx();
+  const {
+    setProcessingVideo,
+    setProgress,
+    creatingVideoUrl,
+    setCreatingVideoUrl,
+    setExportedVideoUrl,
+  } = useOutputVideoCtx();
 
   React.useEffect(() => {
     if (!videoRef || !videoRef.current || !videoUrl) return;
@@ -156,7 +145,7 @@ export default function useEditorWorkSpace() {
   }
 
   async function uploadVideo(file: File, simpleComplexFilterStr: string) {
-    const chunkSize = 4 * 1024 * 1024; // 4MB por chunk
+    const chunkSize = 3 * 1024 * 1024; // 3MB por chunk
 
     const stream = new ReadableStream({
       start(controller) {
@@ -188,7 +177,10 @@ export default function useEditorWorkSpace() {
       )}`,
       {
         method: "POST",
-        headers: { "Content-Type": "application/octet-stream" },
+        headers: {
+          "Content-Type": "application/octet-stream",
+          fileType: file.type,
+        },
         body: stream,
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         ...((fetch as any) && { duplex: "half" }),
@@ -212,15 +204,33 @@ export default function useEditorWorkSpace() {
     if (!videoFile) return;
 
     try {
-      // setProcessingVideo(true);
-      // const newUrl = await processVideo();
-      // setExportedVideoUrl(newUrl);
+      setProcessingVideo(true);
 
       const simpleComplexFilterStr = generateStrCommand();
 
       console.log(simpleComplexFilterStr);
 
-      const response = await uploadVideo(videoFile, simpleComplexFilterStr);
+      let response: Response;
+
+      if (process.env.NODE_ENV == "production") {
+        response = await uploadVideo(videoFile, simpleComplexFilterStr);
+      } else {
+        const formData = new FormData();
+        formData.append("file", videoFile);
+
+        response = await fetch(
+          `/api/video-editor?simpleComplexFilterStr=${encodeURIComponent(
+            simpleComplexFilterStr
+          )}`,
+          {
+            method: "POST",
+            body: formData,
+            headers: {
+              fileType: videoFile.type,
+            },
+          }
+        );
+      }
 
       if (!response.body) {
         console.error("No response body");
@@ -230,15 +240,6 @@ export default function useEditorWorkSpace() {
       const readerInstance = response.body.getReader();
       const decoder = new TextDecoder();
 
-      // const fileHandle = await window.showSaveFilePicker({
-      //   suggestedName: "processed-video.mp4",
-      //   types: [{ accept: { "video/mp4": [".mp4"] } }],
-      // });
-
-      const fileStream = createWriteStreamFunc.current!(videoFile.name);
-      // const fileStream = await fileHandle.createWritable();
-
-      let isVideoStarted = false;
       let _done = false;
 
       while (!_done) {
@@ -246,75 +247,27 @@ export default function useEditorWorkSpace() {
         _done = done;
 
         if (done) {
-          await fileStream.close();
           console.log("Download complete!");
           return;
         }
 
-        if (!isVideoStarted) {
-          const valueStr = decoder.decode(value, { stream: true });
+        const valueStr = decoder.decode(value, { stream: true });
 
-          try {
-            const obj = JSON.parse(valueStr);
-            if (obj.progress) {
-              console.log(`Progress: ${obj.progress}%`);
-              continue;
-            }
-            if (obj.startVideo) {
-              isVideoStarted = true;
-              console.log("Receiving video chunks...");
-              continue;
-            }
-          } catch (_e) {
-            isVideoStarted = true; // Se falhar ao parsear JSON, significa que o vídeo começou
-          }
+        const obj = JSON.parse(valueStr);
+
+        if (obj.progress) {
+          setProgress(Number(obj.progress));
+          console.log(`Progress: ${obj.progress}%`);
+          if (obj.progress == 100 && !creatingVideoUrl)
+            setCreatingVideoUrl(true);
+          continue;
         }
-
-        if (isVideoStarted && value) {
-          await fileStream.getWriter().write(value); // Escreve os chunks de vídeo no arquivo
+        if (obj.videoUrl) {
+          console.log("video url: ", obj.videoUrl);
+          setExportedVideoUrl(obj.videoUrl);
+          continue;
         }
       }
-
-      // const readerInstance = response.body.getReader();
-      // const decoder = new TextDecoder();
-
-      // const fileStream = createWriteStreamFunc.current!("processed-video.mp4"); // TODO: dinamic extencion
-      // const writer = fileStream.getWriter();
-
-      // let _done = false;
-      // let doneObj = false;
-
-      // while (!_done) {
-      //   const { value, done } = await readerInstance.read();
-      //   _done = done;
-
-      //   if (done) {
-      //     writer.close();
-      //     console.log("OK");
-      //   }
-
-      //   const valueStr = decoder.decode(value, { stream: true });
-
-      //   if (!doneObj) {
-      //     try {
-      //       const obj = JSON.parse(valueStr);
-
-      //       if (obj.progress) {
-      //         console.log(obj.progress);
-      //         if (obj.progress === 100) {
-      //           doneObj = true;
-      //           console.log("progress done!");
-      //         }
-      //       }
-      //     } catch (_err) {
-      //       doneObj = true;
-      //     }
-      //   }
-
-      //   if (doneObj && value) {
-      //     await writer.write(value);
-      //   }
-      // }
     } catch (e) {
       console.error(e);
     } finally {

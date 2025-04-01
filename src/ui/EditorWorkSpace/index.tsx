@@ -47,50 +47,52 @@ export default function EditorWorkSpace() {
         <h2 className="text-gray-700 text-lg">{videoName}</h2>
 
         <div className="relative shadow-xl max-h-[720px] w-full grid place-items-center">
-          <video
-            // width="1280"
-            // height="720"
-            className="h-full max-h-[720px] w-auto"
-            style={{
-              scale: `${flipH ? -1 : 1} ${flipV ? -1 : 1}`,
-            }}
-            ref={videoRef}
-            onTimeUpdate={(e) => {
-              if (!videoRef || !videoRef.current) return;
-              const trim = cutAction === "trim";
-              const value = Number(e.currentTarget.currentTime.toFixed(2));
-              const start = Number(videoStartTime.toFixed(2));
-              const end = videoEndTime;
+          <div className="size-fit relative">
+            <video
+              // width="1280"
+              // height="720"
+              className="h-full max-h-[720px] w-auto"
+              style={{
+                scale: `${flipH ? -1 : 1} ${flipV ? -1 : 1}`,
+              }}
+              ref={videoRef}
+              onTimeUpdate={(e) => {
+                if (!videoRef || !videoRef.current) return;
+                const trim = cutAction === "trim";
+                const value = Number(e.currentTarget.currentTime.toFixed(2));
+                const start = Number(videoStartTime.toFixed(2));
+                const end = videoEndTime;
 
-              if (!trim && value > start && value < end)
-                return (videoRef.current.currentTime = end);
+                if (!trim && value > start && value < end)
+                  return (videoRef.current.currentTime = end);
 
-              if ((trim && value < start) || (trim && value > end))
-                return (videoRef.current.currentTime = start);
-            }}
-            onLoadedMetadata={(e) => {
-              setVideoDuration(e.currentTarget.duration);
-              setVideoResolution({
-                w: e.currentTarget.videoWidth,
-                h: e.currentTarget.videoHeight,
-              });
-            }}
-          >
-            <source type="video/mp4" />
-            Your browser does not support the video tag.
-          </video>
-          <div className="absolute inset-0" ref={textBoxContainerRef}>
-            {textList.map((t, i) => (
-              <TextBox
-                containerRef={textBoxContainerRef}
-                key={i}
-                index={i}
-                textBox={t}
-              />
-            ))}
+                if ((trim && value < start) || (trim && value > end))
+                  return (videoRef.current.currentTime = start);
+              }}
+              onLoadedMetadata={(e) => {
+                setVideoDuration(e.currentTarget.duration);
+                setVideoResolution({
+                  w: e.currentTarget.videoWidth,
+                  h: e.currentTarget.videoHeight,
+                });
+              }}
+            >
+              <source type="video/mp4" />
+              Your browser does not support the video tag.
+            </video>
+            <div className="absolute inset-0" ref={textBoxContainerRef}>
+              {textList.map((t, i) => (
+                <TextBox
+                  containerRef={textBoxContainerRef}
+                  key={i}
+                  index={i}
+                  textBox={t}
+                />
+              ))}
+            </div>
+            <CropBox />
+            {/* {toolAction === "crop" && <CropBox />} */}
           </div>
-          <CropBox />
-          {/* {toolAction === "crop" && <CropBox />} */}
         </div>
 
         <h3 className="text-xl text-gray-700 mt-2 mb-4">

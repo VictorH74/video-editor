@@ -1,3 +1,4 @@
+import useOutputVideoCtx from "@/hooks/useOutputVideoCtx";
 import Box from "@mui/material/Box";
 import LinearProgress, {
   linearProgressClasses,
@@ -51,11 +52,17 @@ function LinearProgressWithLabel(
 
 export default function ProgressingPage() {
   // const [progress, setProgress] = React.useState(10);
-  // const { progress } = useOutputVideoCtx();
+  const { progress, creatingVideoUrl } = useOutputVideoCtx();
 
   return (
     <div className="w-screen h-screen grid place-items-center text-center">
-      <LinearProgressWithLabel value={10} />
+      {creatingVideoUrl ? (
+        <Typography variant="body2" fontSize={22} color="text.secondary">
+          Finalizando...
+        </Typography>
+      ) : (
+        <LinearProgressWithLabel value={progress} />
+      )}
     </div>
   );
 }

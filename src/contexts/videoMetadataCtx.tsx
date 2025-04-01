@@ -5,11 +5,13 @@ interface Props {
   videoFile: File | null;
   videoUrl: string | null;
   videoName: string | null;
+  videoType: string | null;
   videoResolution: { w: number; h: number } | undefined;
 
   setVideoFile: React.Dispatch<React.SetStateAction<File | null>>;
   setVideoUrl: React.Dispatch<React.SetStateAction<string | null>>;
   setVideoName: React.Dispatch<React.SetStateAction<string | null>>;
+  setVideoType: React.Dispatch<React.SetStateAction<string | null>>;
   setVideoResolution: React.Dispatch<
     React.SetStateAction<{ w: number; h: number } | undefined>
   >;
@@ -25,6 +27,7 @@ export default function VideoMetadataProvider({
   const [videoFile, setVideoFile] = React.useState<File | null>(null);
   const [videoUrl, setVideoUrl] = React.useState<string | null>(null);
   const [videoName, setVideoName] = React.useState<string | null>(null);
+  const [videoType, setVideoType] = React.useState<string | null>(null);
   const [videoResolution, setVideoResolution] = React.useState<{
     w: number;
     h: number;
@@ -36,6 +39,7 @@ export default function VideoMetadataProvider({
     const videoUrl = URL.createObjectURL(videoFile);
     setVideoUrl(videoUrl);
     setVideoName(videoFile.name);
+    setVideoType(videoFile.type);
   }, [videoFile]);
 
   return (
@@ -44,10 +48,12 @@ export default function VideoMetadataProvider({
         videoFile,
         videoUrl,
         videoName,
+        videoType,
         videoResolution,
         setVideoFile,
         setVideoUrl,
         setVideoName,
+        setVideoType,
         setVideoResolution,
       }}
     >

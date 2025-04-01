@@ -1,27 +1,30 @@
-import ffmpegPath from "@ffmpeg-installer/ffmpeg";
+import { randomUUID } from "crypto";
+import { getStorage } from "firebase-admin/storage";
 import ffmpeg, { FilterSpecification } from "fluent-ffmpeg";
 import fs from "fs";
-import { unlink } from "fs/promises";
+import { readFile, unlink } from "fs/promises";
 import { NextRequest } from "next/server";
 import path from "path";
-import { pipeline } from "stream";
+import { pipeline, Readable } from "stream";
 import { promisify } from "util";
-
-// ffmpeg.setFfmpegPath(ffmpegPath.path);
+import "@/configs/firebaseAdminConfig";
 
 import {
   FilterType,
   generateVideoComplexFilter,
   FilterObjType,
+  generateVideoPaths,
 } from "./util/functions";
+
+const bucket = getStorage().bucket();
 
 // TODO: disabel add_text and add_img filters when rotate filter is aplied
 
 export async function POST(req: NextRequest) {
-  console.log("Called");
   const simpleComplexFilterStr = req.nextUrl.searchParams.get(
     "simpleComplexFilterStr"
-  );
+  ) as string;
+  const fileType = req.headers.get("fileType");
 
   if (!simpleComplexFilterStr) {
     return new Response("param 'simpleComplexFilterStr' not provided", {
@@ -29,18 +32,42 @@ export async function POST(req: NextRequest) {
     });
   }
 
+  if (!fileType) {
+    return new Response("not found required props `fileType` in headers ", {
+      status: 400,
+    });
+  }
+
   console.log(simpleComplexFilterStr);
+  console.log(fileType);
 
   try {
-    const tempVideoPath = path.join("/tmp", `input-${Date.now()}.mp4`);
-    const outputVideoPath = path.join("/tmp", `output-${Date.now()}.mp4`);
+    let inputVideoPath: string;
+    let outputVideoPath: string;
 
-    const writeStream = fs.createWriteStream(tempVideoPath);
-    const pipelineAsync = promisify(pipeline);
-    await pipelineAsync(
-      req.body as unknown as NodeJS.ReadableStream,
-      writeStream
-    );
+    if (process.env.NODE_ENV == "production") {
+      const fileExtension = fileType.split(`/`)[1];
+      inputVideoPath = path.join(
+        "tmp/",
+        `input-${randomUUID()}.${fileExtension}`
+      );
+      outputVideoPath = path.join(
+        "tmp/",
+        `output-${randomUUID()}.${fileExtension}`
+      );
+
+      const writeStream = fs.createWriteStream(inputVideoPath);
+      const pipelineAsync = promisify(pipeline);
+      await pipelineAsync(
+        req.body as unknown as NodeJS.ReadableStream,
+        writeStream
+      );
+    } else {
+      const formData = await req.formData();
+      const paths = await generateVideoPaths(formData.get("file") as File);
+      inputVideoPath = paths.inputVideoPath;
+      outputVideoPath = paths.outputVideoPath;
+    }
 
     // TODO: limit video resolution up to 360 instead 240
 
@@ -90,8 +117,10 @@ export async function POST(req: NextRequest) {
 
     const hasAudioStream = audioComplexFilterList.length > 0;
 
-    let ffmpegInstance = ffmpeg(tempVideoPath)
-      .setFfmpegPath(ffmpegPath.path)
+    const ffmpegInstaller = await import("@ffmpeg-installer/ffmpeg");
+
+    let ffmpegInstance = ffmpeg(inputVideoPath)
+      .setFfmpegPath(ffmpegInstaller.path)
       .videoCodec("libx264")
       .audioCodec("aac")
       .complexFilter(complexFilters as FilterSpecification[])
@@ -104,38 +133,65 @@ export async function POST(req: NextRequest) {
         function push() {
           ffmpegInstance
             .output(outputVideoPath)
-            .on("end", () => {
+            .on("end", async () => {
               controller.enqueue(
-                new TextEncoder().encode(JSON.stringify({ startVideo: true }))
-              ); // Inicia o envio do vídeo
+                new TextEncoder().encode(JSON.stringify({ progress: 100 }))
+              );
 
-              const readStream = fs.createReadStream(outputVideoPath);
-
-              readStream.on("data", (chunk) => {
-                console.log("Received chunk:", chunk);
-                controller.enqueue(
-                  new Uint8Array(chunk as Buffer<ArrayBufferLike>)
-                );
+              await new Promise<void>((res) => {
+                setTimeout(() => {
+                  res();
+                }, 4000);
               });
 
-              readStream.on("end", async () => {
-                await unlink(tempVideoPath);
-                await unlink(outputVideoPath);
-                controller.close();
-                console.log("Finished reading the file.");
+              const file = await readFile(outputVideoPath);
+
+              console.log(file.length);
+
+              // TODO: upload output vídeo to firebase storage
+              await unlink(inputVideoPath);
+              await unlink(outputVideoPath);
+
+              // TODO: return output video url to client
+              // TODO: apply cron to remove videos from firebase
+              const filename = `vheditor-uploads/${randomUUID()}.${
+                fileType!.split("/")[1]
+              }`;
+              const bucketFile = bucket.file(filename);
+
+              // 🔹 Criar stream para o upload
+              const writeStream = bucketFile.createWriteStream({
+                metadata: { contentType: fileType! },
+                resumable: false,
               });
 
-              readStream.on("error", (err) => {
-                console.error(
-                  "An error occurred in 'readStream':",
-                  err.message
-                );
-                controller.enqueue(
-                  new TextEncoder().encode(
-                    JSON.stringify({ error: err.message })
-                  )
-                );
+              // 🔹 Convertendo o `req.body` para stream
+              const readable = new Readable();
+              readable._read = () => {}; // Necessário para streams customizadas
+              readable.push(Buffer.from(file.buffer));
+
+              // readable.push(await req.arrayBuffer());
+              readable.push(null);
+
+              // 🔹 Fazer upload do vídeo para o Firebase Storage
+              await new Promise((resolve, reject) => {
+                readable
+                  .pipe(writeStream)
+                  .on("finish", resolve)
+                  .on("error", reject);
               });
+
+              // 🔹 Gerar URL pública (opcional)
+              await bucketFile.makePublic();
+              const publicUrl = `https://storage.googleapis.com/${bucket.name}/${filename}`;
+
+              controller.enqueue(
+                new TextEncoder().encode(
+                  JSON.stringify({ videoUrl: publicUrl })
+                )
+              );
+
+              controller.close();
             })
             .on("error", (err) => {
               console.error("An error occurred:", err);
